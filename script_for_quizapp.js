@@ -1,120 +1,157 @@
-const startButton=document.getElementById('start-btn');
-const nextButton=document.getElementById('next-btn');
+const startButton = document.getElementById('start-btn');
+const nextButton = document.getElementById('next-btn');
 const questionContainerElement = document.getElementById('question-container');
 const questionElement = document.getElementById('question');
 const answerButtonsElement = document.getElementById('answer-buttons');
-let shuffledQuestion,currentQuestionIndex;
+const result = document.getElementById('result');
+const comment = document.getElementById('comment');
+const scoreContainer = document.getElementById('score');
+const commentContainer = document.getElementById('com');
 
-startButton.addEventListener('click',startGame);
-nextButton.addEventListener('click',()=> {
-    currentQuestionIndex++
-    setNextQuestion()
-})
+let shuffledQuestions, currentQuestionIndex;
+let score = 0;
+let verify;
+let questions = [];
 
-function startGame(){
-    console.log('Started');
-    startButton.classList.add('hide');
-    shuffledQuestion = questions.sort(()=>Math.random() - .5)
-    currentQuestionIndex = 0;
-    questionContainerElement.classList.remove('hide');
+startButton.addEventListener('click', startGame);
+nextButton.addEventListener('click', () => {
+    currentQuestionIndex++;
     setNextQuestion();
+});
+
+function startGame() {
+    console.log('Started');
+    score = 0;
+    startButton.classList.add('hide');
+    fetchQuestions();
 }
 
-function setNextQuestion(){
-    resetState()
-    showQuestion(shuffledQuestion[currentQuestionIndex]);
-}
-
-function showQuestion(question){
-    questionElement.innerText = question.question
-    question.answers.forEach(answer => {
-        const button = document.createElement('button');
-        button.innerText = answer.text ;
-        button.classList.add('btn');
-        if(answer.correct){
-            button.dataset.correct = answer.correct
+function fetchQuestions() {
+    $.ajax({
+        url: 'connection.php',
+        method: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            console.log('Data received:', data); 
+            if (Array.isArray(data)) {
+                questions = data;
+                shuffledQuestions = questions.sort(() => Math.random() - 0.5).slice(0, 5);
+                currentQuestionIndex = 0;
+                questionContainerElement.classList.remove('hide');
+                setNextQuestion();
+            } else {
+                console.error('Received data is not an array:', data);
+            }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            console.error('Error fetching questions:', textStatus, errorThrown);
+            console.error('Response Text:', jqXHR.responseText);
         }
-        button.addEventListener('click',selectAnswer);
-        answerButtonsElement.appendChild(button);
     });
 }
 
-function resetState(){
-    clearStatusClass(document.body)
-    nextButton.classList.add('hide')
-    while(answerButtonsElement.firstChild){
-        answerButtonsElement.removeChild
-        (answerButtonsElement.firstChild)
+function setNextQuestion() {
+    resetState();
+    showQuestion(shuffledQuestions[currentQuestionIndex]);
+}
+
+function showQuestion(question) {
+    questionElement.innerText = question.question;
+    verify = true;
+    question.answers.forEach(answer => {
+        const button = document.createElement('button');
+        button.innerText = answer.text;
+        button.classList.add('btn');
+        if (answer.correct) {
+            button.dataset.correct = answer.correct;
+        }
+        answerButtonsElement.appendChild(button);
+        button.addEventListener('click', selectAnswer);
+    });
+}
+
+function resetState() {
+    clearStatusClass(document.body);
+    nextButton.classList.add('hide');
+    while (answerButtonsElement.firstChild) {
+        answerButtonsElement.removeChild(answerButtonsElement.firstChild);
     }
 }
-function selectAnswer(e){
-    const selectedButton = e.target
-    const correct = selectedButton.dataset.correct
-    setStatusClass(document.body, correct)
-    Array.from(answerButtonsElement.children).forEach(button=>{
-        setStatusClass(button, button.dataset.correct)
-    })
-    if (shuffledQuestion.length > currentQuestionIndex 
-        + 1){
-            nextButton.classList.remove('hide')
+
+function selectAnswer(e) {
+    if (!verify) return; 
+
+    const selectedButton = e.target;
+    const correct = selectedButton.dataset.correct === 'true';
+    const buttons = Array.from(answerButtonsElement.children);
+
+    // Set background color for the selected button
+    if (correct) {
+        selectedButton.classList.add('correct');
+        score += 1;
+    } else {
+        selectedButton.classList.add('wrong');
+        // Find and highlight the correct button
+        const correctButton = buttons.find(button => button.dataset.correct === 'true');
+        if (correctButton) {
+            correctButton.classList.add('correct');
+        }
+    }
+
+    
+    buttons.forEach(button => {
+        button.disabled = true;
+    });
+
+    
+    if (shuffledQuestions.length > currentQuestionIndex + 1) {
+        nextButton.classList.remove('hide');
+    } else {
+        result.classList.remove('hide');
+        startButton.innerText = 'Restart';
+        startButton.classList.remove('hide');
+        scoreContainer.innerHTML = `${score}/5`;
+        if (score<5 && score>2) {
+            commentContainer.innerHTML = "Good Work";
+        }
+        else if(score === 5){
+            commentContainer.innerHTML = "Excellent Work";
+        }
+        else if(score>0 && score<3){
+            commentContainer.innerHTML = "You can do better";
         }
         else{
-            startButton.innerText = 'Restart'
-            startButton.classList.remove('hide')
+            commentContainer.innerHTML = "Better luck next time";
         }
+        comment.classList.remove('hide');
+    }
+
+    verify = false;
 }
 
-function setStatusClass(element, correct){
-    clearStatusClass(element)
-    if(correct){
-        element.classList.add('correct')
-    }
-    else{
-        element.classList.add('wrong')
+function clearStatusClass() {
+    Array.from(answerButtonsElement.children).forEach(button => {
+        button.classList.remove('correct');
+        button.classList.remove('wrong');
+    });
+    result.classList.add('hide');
+    comment.classList.add('hide');
+}
+
+function setStatusClass(element, correct) {
+    clearStatusClass(element);
+    if (correct) {
+        element.classList.add('correct');
+    } else {
+        element.classList.add('wrong');
     }
 }
 
-function clearStatusClass(element){
-    element.classList.remove('correct')
-    element.classList.remove('wrong')
-}
-
-const questions=[
-    {
-        question:'What is 6+9? ',
-        answers:[
-            {text:'15',correct:true},
-            {text:'69',wrong:false}
-        ]
-    },
-    {
-        question:'What is the capital of India? ',
-        answers:[
-            {text:'Mumbai',wrong:false},
-            {text:'Delhi',correct:true}
-        ]
-    },
-    {
-        question:'Which of these is an outdoor game? ',
-        answers:[
-            {text:'Chess',wrong:false},
-            {text:'Football',correct:true}
-        ]
-        
-    },
-    {
-        question:'Which of these is an indoor game? ',
-        answers:[
-            {text:'Chess',correct:true},
-            {text:'Football',wrong:false}
-        ]
-    },
-    {
-        question:'What is 4*2?  ',
-        answers:[
-            {text:'8',correct:true},
-            {text:'42',wrong:false}
-        ]
-
+function setStatusClass1(element, correct) {
+    clearStatusClass(element);
+    if (correct) {
+        element.classList.add('correct');
+    } else {
+        element.classList.add('wrong');
     }
-]
+}

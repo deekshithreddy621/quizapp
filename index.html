@@ -3,9 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="styles_for_quizapp.css" rel="stylesheet">
-    <script defer src="script_for_quizapp.js"></script>
+    <script  defer src="script_for_quizapp.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <title>quiz application</title>
 
 </head>
@@ -14,16 +17,17 @@
         <div id="question-container" class="hide">
             <div id="question">Question</div>
             <div id="answer-buttons" class="btn-grid">
-                <button class="btn">Answer 1</button>
-                <button class="btn">Answer 2</button>
-                <button class="btn">Answer 3</button>
-                <button class="btn">Answer 4</button>
+                <button class="btn" id="xyz">Answer 1</button>       
+                <button class="btn" id="xyz">Answer 2</button>
+                <button class="btn" id="xyz">Answer 3</button>
+                <button class="btn" id="xyz">Answer 4</button>
             </div>
         </div>
+        <p id="result"class=" results hide" >Your Score:<span id="score"></span></p>
+        <p id="comment" class="comments hide">Comment:<span id="com"></span></p>
         <div class="controls">
-            <button id="start-btn" class="start-btn btn">Start</button>
+            <button id="start-btn" class="start-btn btn" >Start</button>
             <button id="next-btn" class="next-btn btn hide">Next</button>
-        </div>
-    
+        </div> 
 </body>
 </html>
